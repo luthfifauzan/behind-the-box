@@ -1,0 +1,14 @@
+# Claude Code
+.claude/
+
+# Docs
+docs/
+
+# Context files
+CONTEXT.md
+CONTEXT*.md
+context.md
+context*.md
+
+# OS
+.DS_Store
