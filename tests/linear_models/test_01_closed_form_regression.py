@@ -29,6 +29,7 @@ _Synthetic = tuple[np.ndarray, np.ndarray, np.ndarray, float]
 
 @pytest.fixture
 def rng() -> np.random.Generator:
+    """Seeded random generator for reproducible tests."""
     return np.random.default_rng(42)
 
 
@@ -48,25 +49,32 @@ def synthetic(
 
 
 class TestAPIContract:
+    """Verify the public interface contract of LinearRegression."""
+
     def test_fit_returns_self(self, synthetic: _Synthetic) -> None:
+        """fit() must return self to allow method chaining."""
         X, y, *_ = synthetic
         model = LinearRegression()
         assert model.fit(X, y) is model
 
     def test_coef_not_set_before_fit(self) -> None:
+        """coef_ must not be accessible before fit() is called."""
         with pytest.raises(AttributeError):
             _ = LinearRegression().coef_
 
     def test_intercept_not_set_before_fit(self) -> None:
+        """intercept_ must not be accessible before fit() is called."""
         with pytest.raises(AttributeError):
             _ = LinearRegression().intercept_
 
     def test_coef_shape(self, synthetic: _Synthetic) -> None:
+        """coef_ must be a 1-D array with one entry per feature."""
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         assert model.coef_.shape == (X.shape[1],)
 
     def test_intercept_is_scalar(self, synthetic: _Synthetic) -> None:
+        """intercept_ must be a 0-D scalar value."""
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         assert np.ndim(model.intercept_) == 0
@@ -74,12 +82,14 @@ class TestAPIContract:
     def test_predict_output_shape(
         self, synthetic: _Synthetic, rng: np.random.Generator,
     ) -> None:
+        """predict() must return a 1-D array with one entry per sample."""
         X, y, *_ = synthetic
         X_test = rng.standard_normal((25, X.shape[1]))
         model = LinearRegression().fit(X, y)
         assert model.predict(X_test).shape == (25,)
 
     def test_score_returns_float(self, synthetic: _Synthetic) -> None:
+        """score() must return a Python float."""
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         assert isinstance(model.score(X, y), float)
@@ -89,6 +99,8 @@ class TestAPIContract:
 
 
 class TestMathematicalProperties:
+    """Verify OLS mathematical invariants."""
+
     def test_residuals_orthogonal_to_feature_space(self, synthetic: _Synthetic) -> None:
         """OLS residuals must lie in the null space of X̃ᵀ (normal equations)."""
         X, y, *_ = synthetic
@@ -143,13 +155,17 @@ class TestMathematicalProperties:
 
 
 class TestOracleComparison:
+    """Verify numerical agreement with scikit-learn LinearRegression."""
+
     def test_coef_matches_sklearn(self, synthetic: _Synthetic) -> None:
+        """coef_ must match scikit-learn to within rtol=1e-6."""
         X, y, *_ = synthetic
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
         np.testing.assert_allclose(model.coef_, ref.coef_, rtol=1e-6)
 
     def test_intercept_matches_sklearn(self, synthetic: _Synthetic) -> None:
+        """intercept_ must match scikit-learn to within rtol=1e-6."""
         X, y, *_ = synthetic
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
@@ -158,6 +174,7 @@ class TestOracleComparison:
     def test_predictions_match_sklearn(
         self, synthetic: _Synthetic, rng: np.random.Generator,
     ) -> None:
+        """predict() must match scikit-learn on held-out data to within rtol=1e-6."""
         X, y, *_ = synthetic
         X_test = rng.standard_normal((30, X.shape[1]))
         ref = SklearnLR().fit(X, y)
@@ -165,6 +182,7 @@ class TestOracleComparison:
         np.testing.assert_allclose(model.predict(X_test), ref.predict(X_test), rtol=1e-6)
 
     def test_score_matches_sklearn(self, synthetic: _Synthetic) -> None:
+        """score() R² must match scikit-learn to within rel=1e-6."""
         X, y, *_ = synthetic
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
@@ -172,6 +190,7 @@ class TestOracleComparison:
 
     @pytest.mark.parametrize("seed", range(5))
     def test_matches_sklearn_across_random_seeds(self, seed: int) -> None:
+        """coef_ and intercept_ must match scikit-learn across multiple random seeds."""
         rng = np.random.default_rng(seed)
         X = rng.standard_normal((200, 8))
         y = rng.standard_normal(200)
@@ -185,7 +204,10 @@ class TestOracleComparison:
 
 
 class TestEdgeCases:
+    """Verify correct behaviour on corner-case inputs."""
+
     def test_single_feature(self, rng: np.random.Generator) -> None:
+        """Single-feature regression must recover slope and intercept accurately."""
         X = rng.standard_normal((80, 1))
         y = 3.0 * X.ravel() + 1.0 + rng.standard_normal(80) * 0.01
         model = LinearRegression().fit(X, y)
@@ -193,6 +215,7 @@ class TestEdgeCases:
         np.testing.assert_allclose(model.intercept_, 1.0, atol=0.05)
 
     def test_many_features(self, rng: np.random.Generator) -> None:
+        """High-dimensional regression must match scikit-learn to within rtol=1e-5."""
         X = rng.standard_normal((500, 50))
         true_coef = rng.standard_normal(50)
         y = X @ true_coef + rng.standard_normal(500) * 0.1
@@ -219,6 +242,7 @@ class TestEdgeCases:
     def test_predictions_on_unseen_data_are_finite(
         self, synthetic: _Synthetic, rng: np.random.Generator,
     ) -> None:
+        """Predictions on out-of-distribution data must all be finite."""
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         X_new = rng.standard_normal((50, X.shape[1])) * 10
@@ -229,7 +253,10 @@ class TestEdgeCases:
 
 
 class TestRealDatasets:
+    """Verify performance and correctness on real-world datasets."""
+
     def test_california_housing_r2(self) -> None:
+        """R² on California Housing must exceed 0.58 and match scikit-learn."""
         data = fetch_california_housing()
         X, y = data.data, data.target
         model = LinearRegression().fit(X, y)
@@ -239,12 +266,14 @@ class TestRealDatasets:
         np.testing.assert_allclose(r2, ref.score(X, y), atol=0.01)
 
     def test_california_housing_predictions_are_finite(self) -> None:
+        """Predictions on California Housing must all be finite."""
         data = fetch_california_housing()
         X, y = data.data, data.target
         model = LinearRegression().fit(X, y)
         assert np.all(np.isfinite(model.predict(X)))
 
     def test_advertising_csv(self) -> None:
+        """R² on Advertising must exceed 0.89 and match scikit-learn."""
         fixture = os.path.join(
             os.path.dirname(__file__), "..", "fixtures", "advertising.csv"
         )
