@@ -27,4 +27,6 @@ lint.ignore = [
     "N999",
     # assert statements are used in tests
     "S101",
+    # PTH rules are deemed unsafe by ruff
+    "PTH",
 ]

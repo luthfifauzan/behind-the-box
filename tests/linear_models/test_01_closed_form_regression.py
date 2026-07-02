@@ -179,7 +179,9 @@ class TestOracleComparison:
         X_test = rng.standard_normal((30, X.shape[1]))
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
-        np.testing.assert_allclose(model.predict(X_test), ref.predict(X_test), rtol=1e-6)
+        np.testing.assert_allclose(
+            model.predict(X_test), ref.predict(X_test), rtol=1e-6,
+        )
 
     def test_score_matches_sklearn(self, synthetic: _Synthetic) -> None:
         """score() R² must match scikit-learn to within rel=1e-6."""
@@ -224,7 +226,7 @@ class TestEdgeCases:
         np.testing.assert_allclose(model.coef_, ref.coef_, rtol=1e-5)
 
     def test_collinear_features_no_nan(self, rng: np.random.Generator) -> None:
-        """lstsq must not raise and must return finite predictions under collinearity."""
+        """Under exact collinearity, must not raise and predictions must be finite."""
         X = rng.standard_normal((100, 3))
         X[:, 2] = X[:, 0] + X[:, 1]  # exact linear dependence
         y = X[:, 0] + rng.standard_normal(100) * 0.1
@@ -278,7 +280,9 @@ class TestRealDatasets:
             os.path.dirname(__file__), "..", "fixtures", "advertising.csv"
         )
         if not os.path.exists(fixture):
-            pytest.skip("tests/fixtures/advertising.csv not found — download from Kaggle")
+            pytest.skip(
+                "tests/fixtures/advertising.csv not found — download from Kaggle",
+            )
 
         # Detect column positions from header
         with open(fixture) as f:
