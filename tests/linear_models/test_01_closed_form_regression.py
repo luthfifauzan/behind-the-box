@@ -26,12 +26,14 @@ from linear_models.closed_form_regression import LinearRegression
 
 
 @pytest.fixture
-def rng():
+def rng() -> np.random.Generator:
     return np.random.default_rng(42)
 
 
 @pytest.fixture
-def synthetic(rng):
+def synthetic(
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
     """100-sample, 3-feature dataset with known ground-truth parameters."""
     true_coef = np.array([2.0, -1.5, 0.8])
     true_intercept = 5.0
@@ -44,36 +46,36 @@ def synthetic(rng):
 
 
 class TestAPIContract:
-    def test_fit_returns_self(self, synthetic):
+    def test_fit_returns_self(self, synthetic) -> None:
         X, y, *_ = synthetic
         model = LinearRegression()
         assert model.fit(X, y) is model
 
-    def test_coef_not_set_before_fit(self):
+    def test_coef_not_set_before_fit(self) -> None:
         with pytest.raises(AttributeError):
             _ = LinearRegression().coef_
 
-    def test_intercept_not_set_before_fit(self):
+    def test_intercept_not_set_before_fit(self) -> None:
         with pytest.raises(AttributeError):
             _ = LinearRegression().intercept_
 
-    def test_coef_shape(self, synthetic):
+    def test_coef_shape(self, synthetic) -> None:
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         assert model.coef_.shape == (X.shape[1],)
 
-    def test_intercept_is_scalar(self, synthetic):
+    def test_intercept_is_scalar(self, synthetic) -> None:
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         assert np.ndim(model.intercept_) == 0
 
-    def test_predict_output_shape(self, synthetic, rng):
+    def test_predict_output_shape(self, synthetic, rng) -> None:
         X, y, *_ = synthetic
         X_test = rng.standard_normal((25, X.shape[1]))
         model = LinearRegression().fit(X, y)
         assert model.predict(X_test).shape == (25,)
 
-    def test_score_returns_float(self, synthetic):
+    def test_score_returns_float(self, synthetic) -> None:
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         assert isinstance(model.score(X, y), float)
@@ -83,7 +85,7 @@ class TestAPIContract:
 
 
 class TestMathematicalProperties:
-    def test_residuals_orthogonal_to_feature_space(self, synthetic):
+    def test_residuals_orthogonal_to_feature_space(self, synthetic) -> None:
         """OLS residuals must lie in the null space of X̃ᵀ (normal equations)."""
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
@@ -91,27 +93,27 @@ class TestMathematicalProperties:
         residuals = y - model.predict(X)
         np.testing.assert_allclose(X_b.T @ residuals, 0.0, atol=1e-8)
 
-    def test_noiseless_data_gives_perfect_r2(self, rng):
+    def test_noiseless_data_gives_perfect_r2(self, rng) -> None:
         """With no noise and n_samples > n_features, R² must equal 1."""
         X = rng.standard_normal((60, 4))
         y = X @ np.array([1.0, -2.0, 0.5, 3.0]) + 7.0
         r2 = LinearRegression().fit(X, y).score(X, y)
         np.testing.assert_allclose(r2, 1.0, atol=1e-10)
 
-    def test_recovers_true_coefficients(self, synthetic):
+    def test_recovers_true_coefficients(self, synthetic) -> None:
         """Low-noise data: fitted parameters must be close to the truth."""
         X, y, true_coef, true_intercept = synthetic
         model = LinearRegression().fit(X, y)
         np.testing.assert_allclose(model.coef_, true_coef, atol=0.05)
         np.testing.assert_allclose(model.intercept_, true_intercept, atol=0.05)
 
-    def test_score_on_training_predictions_is_one(self, synthetic):
+    def test_score_on_training_predictions_is_one(self, synthetic) -> None:
         """score(X, predict(X)) must always return 1.0."""
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         assert model.score(X, model.predict(X)) == pytest.approx(1.0)
 
-    def test_linear_part_is_additive(self, synthetic, rng):
+    def test_linear_part_is_additive(self, synthetic, rng) -> None:
         """(predict(X1+X2) - b) == (predict(X1)-b) + (predict(X2)-b)."""
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
@@ -122,7 +124,7 @@ class TestMathematicalProperties:
         rhs = (model.predict(X1) - b) + (model.predict(X2) - b)
         np.testing.assert_allclose(lhs, rhs, rtol=1e-10)
 
-    def test_zero_feature_matrix_predicts_mean(self, rng):
+    def test_zero_feature_matrix_predicts_mean(self, rng) -> None:
         """When all features are zero, the only signal is the intercept = mean(y)."""
         y = rng.standard_normal(100)
         X = np.zeros((100, 3))
@@ -135,33 +137,33 @@ class TestMathematicalProperties:
 
 
 class TestOracleComparison:
-    def test_coef_matches_sklearn(self, synthetic):
+    def test_coef_matches_sklearn(self, synthetic) -> None:
         X, y, *_ = synthetic
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
         np.testing.assert_allclose(model.coef_, ref.coef_, rtol=1e-6)
 
-    def test_intercept_matches_sklearn(self, synthetic):
+    def test_intercept_matches_sklearn(self, synthetic) -> None:
         X, y, *_ = synthetic
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
         np.testing.assert_allclose(model.intercept_, ref.intercept_, rtol=1e-6)
 
-    def test_predictions_match_sklearn(self, synthetic, rng):
+    def test_predictions_match_sklearn(self, synthetic, rng) -> None:
         X, y, *_ = synthetic
         X_test = rng.standard_normal((30, X.shape[1]))
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
         np.testing.assert_allclose(model.predict(X_test), ref.predict(X_test), rtol=1e-6)
 
-    def test_score_matches_sklearn(self, synthetic):
+    def test_score_matches_sklearn(self, synthetic) -> None:
         X, y, *_ = synthetic
         ref = SklearnLR().fit(X, y)
         model = LinearRegression().fit(X, y)
         assert model.score(X, y) == pytest.approx(ref.score(X, y), rel=1e-6)
 
     @pytest.mark.parametrize("seed", range(5))
-    def test_matches_sklearn_across_random_seeds(self, seed):
+    def test_matches_sklearn_across_random_seeds(self, seed) -> None:
         rng = np.random.default_rng(seed)
         X = rng.standard_normal((200, 8))
         y = rng.standard_normal(200)
@@ -175,14 +177,14 @@ class TestOracleComparison:
 
 
 class TestEdgeCases:
-    def test_single_feature(self, rng):
+    def test_single_feature(self, rng) -> None:
         X = rng.standard_normal((80, 1))
         y = 3.0 * X.ravel() + 1.0 + rng.standard_normal(80) * 0.01
         model = LinearRegression().fit(X, y)
         np.testing.assert_allclose(model.coef_[0], 3.0, atol=0.05)
         np.testing.assert_allclose(model.intercept_, 1.0, atol=0.05)
 
-    def test_many_features(self, rng):
+    def test_many_features(self, rng) -> None:
         X = rng.standard_normal((500, 50))
         true_coef = rng.standard_normal(50)
         y = X @ true_coef + rng.standard_normal(500) * 0.1
@@ -190,7 +192,7 @@ class TestEdgeCases:
         ref = SklearnLR().fit(X, y)
         np.testing.assert_allclose(model.coef_, ref.coef_, rtol=1e-5)
 
-    def test_collinear_features_no_nan(self, rng):
+    def test_collinear_features_no_nan(self, rng) -> None:
         """lstsq must not raise and must return finite predictions under collinearity."""
         X = rng.standard_normal((100, 3))
         X[:, 2] = X[:, 0] + X[:, 1]  # exact linear dependence
@@ -199,14 +201,14 @@ class TestEdgeCases:
         preds = model.predict(X)
         assert np.all(np.isfinite(preds))
 
-    def test_two_samples_one_feature(self):
+    def test_two_samples_one_feature(self) -> None:
         """Minimum viable dataset: 2 points determine a line exactly."""
         X = np.array([[0.0], [1.0]])
         y = np.array([1.0, 3.0])
         model = LinearRegression().fit(X, y)
         np.testing.assert_allclose(model.predict(X), y, atol=1e-10)
 
-    def test_predictions_on_unseen_data_are_finite(self, synthetic, rng):
+    def test_predictions_on_unseen_data_are_finite(self, synthetic, rng) -> None:
         X, y, *_ = synthetic
         model = LinearRegression().fit(X, y)
         X_new = rng.standard_normal((50, X.shape[1])) * 10
@@ -217,7 +219,7 @@ class TestEdgeCases:
 
 
 class TestRealDatasets:
-    def test_california_housing_r2(self):
+    def test_california_housing_r2(self) -> None:
         data = fetch_california_housing()
         X, y = data.data, data.target
         model = LinearRegression().fit(X, y)
@@ -226,13 +228,13 @@ class TestRealDatasets:
         assert r2 > 0.58, f"R² on California Housing too low: {r2:.4f}"
         np.testing.assert_allclose(r2, ref.score(X, y), atol=0.01)
 
-    def test_california_housing_predictions_are_finite(self):
+    def test_california_housing_predictions_are_finite(self) -> None:
         data = fetch_california_housing()
         X, y = data.data, data.target
         model = LinearRegression().fit(X, y)
         assert np.all(np.isfinite(model.predict(X)))
 
-    def test_advertising_csv(self):
+    def test_advertising_csv(self) -> None:
         fixture = os.path.join(
             os.path.dirname(__file__), "..", "fixtures", "advertising.csv"
         )

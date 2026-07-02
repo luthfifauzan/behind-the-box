@@ -25,4 +25,6 @@ lint.ignore = [
     "N806",
     # numbered filenames (e.g. 01-closed-form-regression.py) are intentional
     "N999",
+    # assert statements are used in tests
+    "S101",
 ]
