@@ -16,3 +16,13 @@ dev = [
     "ruff>=0.15.16",
     "scikit-learn>=1.9.0",
 ]
+
+[tool.ruff]
+lint.extend-select = ["ALL"] #["PTH", "ANN", "NPY", "W", "T20", "D", "INP"]
+lint.ignore = [
+    # snake_case & non-lower case convention
+    "N803",
+    "N806",
+    # numbered filenames (e.g. 01-closed-form-regression.py) are intentional
+    "N999",
+]
