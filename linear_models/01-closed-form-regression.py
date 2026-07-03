@@ -20,9 +20,6 @@ class LinearRegression:
         intercept_ (float): Scalar bias term θ₀.
     """
 
-    def __init__(self) -> None:
-        """Some docstring to put here."""
-
     def fit(self, X: np.ndarray, y: np.ndarray) -> "LinearRegression":
         """Solve for the optimal parameters using the Normal Equation.
 
@@ -54,7 +51,7 @@ class LinearRegression:
         """
 
         X_prepended = np.column_stack((np.ones(X.shape[0]), X))
-        theta = np.linalg.lstsq(X_prepended, y)[0]
+        theta, *_ = np.linalg.lstsq(X_prepended, y)
 
         self.intercept_ = theta[0]
         self.coef_ = theta[1:]
@@ -105,8 +102,8 @@ class LinearRegression:
         """
         y_pred = self.predict(X)
 
-        model_error = sum((y - y_pred) ** 2)
-        baseline_error = sum((y - np.mean(y)) ** 2)
+        model_error = np.sum((y - y_pred) ** 2)
+        baseline_error = np.sum((y - np.mean(y)) ** 2)
 
         return 1 - (model_error / baseline_error)
 
@@ -119,3 +116,6 @@ if __name__ == "__main__":
 
     y_pred = lr.predict(X)
     r2_score = lr.score(X, y)
+
+    print(y_pred)
+    print(r2_score)
