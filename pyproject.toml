@@ -23,6 +23,10 @@ lint.ignore = [
     # snake_case & non-lower case convention
     "N803",
     "N806",
-    # numbered filenames (e.g. 01-closed-form-regression.py) are intentional
-    "N999",
+
+    "N999", # numbered filenames (e.g. 01-closed-form-regression.py) are intentional
+    "S101", # assert statements are used in tests
+    "PTH", # PTH rules are deemed unsafe by ruff
+    "D", # unused convention (use google instead)
+    "RUF002" # using hypen or minus in docstring
 ]

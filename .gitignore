@@ -18,5 +18,8 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 
+# Test fixtures (datasets downloaded from Kaggle)
+tests/fixtures/
+
 # OS
 .DS_Store
