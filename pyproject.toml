@@ -29,4 +29,6 @@ lint.ignore = [
     "S101",
     # PTH rules are deemed unsafe by ruff
     "PTH",
+    # unused convention (use google instead)
+    "D"
 ]
