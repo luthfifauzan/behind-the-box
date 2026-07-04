@@ -195,7 +195,7 @@ $$R^2 = 1 - \frac{0}{275} = 1.0$$
 
 A perfect score — as expected for noise-free data. On a real (noisy) dataset you would typically see $R^2$ between 0 and 1.
 
-`score` returns this value.
+`score` returns this value. Because every regressor computes $R^2$ the same way, `score` lives in `RegressorMixin` ([base.py](../base.py)) and `LinearRegression` inherits it.
 
 ---
 
@@ -208,7 +208,7 @@ class LinearRegression:
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "LinearRegression": ...
     def predict(self, X: np.ndarray) -> np.ndarray: ...
-    def score(self, X: np.ndarray, y: np.ndarray) -> float: ...
+    def score(self, X: np.ndarray, y: np.ndarray) -> float: ...  # inherited from RegressorMixin (base.py)
 ```
 
 **Numerical note.** Prefer `np.linalg.lstsq` over computing $(X^\top X)^{-1}$ explicitly. `lstsq` uses an SVD-based solver that stays numerically stable when features are collinear — cases where $\tilde{X}^\top \tilde{X}$ is near-singular and direct inversion would amplify rounding errors.

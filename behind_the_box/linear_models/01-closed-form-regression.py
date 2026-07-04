@@ -2,8 +2,10 @@
 
 import numpy as np
 
+from behind_the_box.base import RegressorMixin
 
-class LinearRegression:
+
+class LinearRegression(RegressorMixin):
     """Ordinary Least Squares regression solved via the Normal Equation.
 
     The model predicts a continuous target as a weighted sum of input features
@@ -18,6 +20,8 @@ class LinearRegression:
     Attributes set after fit():
         coef_ (np.ndarray): Shape (n_features,). One weight per input feature.
         intercept_ (float): Scalar bias term θ₀.
+
+    score() (R²) is inherited from RegressorMixin — see behind_the_box/base.py.
     """
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "LinearRegression":
@@ -75,47 +79,3 @@ class LinearRegression:
         """
 
         return X @ self.coef_ + self.intercept_
-
-    def score(self, X: np.ndarray, y: np.ndarray) -> float:
-        """Compute the R² coefficient of determination (equation 9 in the .md).
-
-        R² measures what fraction of the variance in y is explained by the model:
-
-            R² = 1 − SS_res / SS_tot
-
-        where:
-            SS_res = Σ (yᵢ − ŷᵢ)²   (sum of squared residuals — model's error)
-            SS_tot = Σ (yᵢ − ȳ)²    (total variance — baseline error)
-            ȳ      = mean(y)
-
-        Interpretation:
-            R² = 1.0  →  perfect predictions.
-            R² = 0.0  →  no better than always predicting the mean.
-            R² < 0.0  →  worse than the mean baseline (possible on test data).
-
-        Args:
-            X: Feature matrix of shape (n_samples, n_features).
-            y: True target values of shape (n_samples,).
-
-        Returns:
-            R² as a Python float.
-        """
-        y_pred = self.predict(X)
-
-        model_error = np.sum((y - y_pred) ** 2)
-        baseline_error = np.sum((y - np.mean(y)) ** 2)
-
-        return 1 - (model_error / baseline_error)
-
-
-if __name__ == "__main__":
-    X = np.array([[1, 4], [2, 6], [3, 4], [1, 6]])  # following the example
-    y = np.array([40, 60, 60, 50])
-
-    lr = LinearRegression().fit(X, y)
-
-    y_pred = lr.predict(X)
-    r2_score = lr.score(X, y)
-
-    print(y_pred)
-    print(r2_score)

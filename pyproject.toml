@@ -1,11 +1,21 @@
 [project]
 name = "behind-the-box"
 version = "0.1.0"
-description = "Add your description here"
+description = "ML algorithms implemented from scratch in NumPy, paired with mathematical derivations"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.4.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "network: needs internet access (e.g. fetch_california_housing)",
 ]
 
 [dependency-groups]
@@ -30,3 +40,6 @@ lint.ignore = [
     "D", # unused convention (use google instead)
     "RUF002" # using hypen or minus in docstring
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"experiments/*" = ["T20"] # printing the leaderboard is the CLI's job
