@@ -22,7 +22,7 @@ from sklearn.linear_model import LinearRegression as SklearnLR
 from sklearn.model_selection import KFold, train_test_split
 
 from behind_the_box import MODELS
-from experiments.datasets import LOADERS
+from behind_the_box.datasets import LOADERS
 
 # sklearn counterpart per algorithm file stem — the "known good" baseline
 # each model is compared against. Extend as new models land.

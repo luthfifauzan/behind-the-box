@@ -1,14 +1,18 @@
-"""Fixtures shared by every algorithm's test suite."""
+"""Fixtures shared by every algorithm's test suite.
 
-import pathlib
+Real datasets come from behind_the_box.datasets (the single source of
+truth); the fixtures here only add pytest concerns — session caching and
+skip-when-offline.
+"""
+
+from urllib.error import URLError
 
 import numpy as np
 import pytest
-from sklearn.datasets import fetch_california_housing
+
+from behind_the_box import datasets
 
 _Synthetic = tuple[np.ndarray, np.ndarray, np.ndarray, float]
-
-_FIXTURES_DIR = pathlib.Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
@@ -21,7 +25,8 @@ def rng() -> np.random.Generator:
 def synthetic(rng: np.random.Generator) -> _Synthetic:
     """100-sample, 3-feature dataset with known ground-truth parameters.
 
-    Returns (X, y, true_coef, true_intercept).
+    Returns (X, y, true_coef, true_intercept) — unlike datasets.synthetic,
+    the truth is returned so tests can assert parameter recovery.
     """
     true_coef = np.array([2.0, -1.5, 0.8])
     true_intercept = 5.0
@@ -33,27 +38,15 @@ def synthetic(rng: np.random.Generator) -> _Synthetic:
 @pytest.fixture(scope="session")
 def california_housing() -> tuple[np.ndarray, np.ndarray]:
     """California Housing (X, y). Session-scoped: fetched/parsed once per run."""
-    data = fetch_california_housing()
-    return data.data, data.target
+    X, y, _ = datasets.california()
+    return X, y
 
 
 @pytest.fixture(scope="session")
 def advertising() -> tuple[np.ndarray, np.ndarray]:
-    """Advertising dataset (X, y) from tests/fixtures/advertising.csv.
-
-    The CSV is gitignored (downloaded from Kaggle); tests that use this
-    fixture are skipped when it is absent.
-    """
-    fixture = _FIXTURES_DIR / "advertising.csv"
-    if not fixture.exists():
-        pytest.skip("tests/fixtures/advertising.csv not found — download from Kaggle")
-
-    # Detect column positions from the header.
-    with open(fixture) as f:
-        header = f.readline().strip()
-    cols = [c.strip(' "').lower() for c in header.split(",")]
-    feature_cols = [cols.index("tv"), cols.index("radio"), cols.index("newspaper")]
-    target_col = cols.index("sales")
-
-    data = np.genfromtxt(fixture, delimiter=",", skip_header=1)
-    return data[:, feature_cols], data[:, target_col]
+    """Advertising dataset (X, y); auto-downloaded and cached on first use."""
+    try:
+        X, y, _ = datasets.advertising()
+    except URLError:
+        pytest.skip("offline and advertising.csv not cached")
+    return X, y

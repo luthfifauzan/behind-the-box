@@ -36,6 +36,7 @@ The user asks for hints. Claude does not volunteer them.
 behind_the_box/            # installable package (sklearn/sklearn style; ADR-0003)
   __init__.py              # aggregates family registries into MODELS
   base.py                  # shared mixins (RegressorMixin.score); keep minimal
+  datasets.py              # dataset loaders (sklearn.datasets analog, fetch+cache); single source for tests + experiments
   <family>/
     __init__.py            # auto-discovers NN-*.py; no per-model registration needed
     <NN>-<name>.md         # explanation (Claude writes)
@@ -47,10 +48,9 @@ tests/
     regressor_checks.py    # reusable check suites, configured via subclass attrs
     test_<NN>_<name>.py    # tests (Claude writes)
   fixtures/
-    advertising.csv        # gitignored; user downloads from Kaggle
+    advertising.csv        # gitignored; optional — auto-downloaded to ~/.cache/behind_the_box/ otherwise
 
 experiments/               # model-selection harness (ADR-0004); Claude writes
-  datasets.py              # problem-tagged loaders
   benchmark.py             # leaderboard CLI: models vs sklearn baselines
 ```
 

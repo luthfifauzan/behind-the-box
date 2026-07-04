@@ -251,6 +251,7 @@ class RegressorRealDataChecks(_RegressorConfig):
         model = self.model_factory().fit(X, y)
         assert np.all(np.isfinite(model.predict(X)))
 
+    @pytest.mark.network
     def test_advertising_csv(
         self, advertising: tuple[np.ndarray, np.ndarray],
     ) -> None:
